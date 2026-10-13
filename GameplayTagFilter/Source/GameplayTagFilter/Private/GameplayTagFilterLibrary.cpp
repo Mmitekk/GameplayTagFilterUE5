@@ -34,7 +34,7 @@ namespace
 }
 
 void UGameplayTagFilterLibrary::FilterActorsByTag(const TArray<AActor*>& Actors,
-	const FGameplayTag& Tag, bool bExactMatch,
+	FGameplayTag Tag, bool bExactMatch,
 	TArray<AActor*>& OutActors, int32& MatchCount)
 {
 	OutActors.Reset();
@@ -55,7 +55,7 @@ void UGameplayTagFilterLibrary::FilterActorsByTag(const TArray<AActor*>& Actors,
 }
 
 void UGameplayTagFilterLibrary::FilterActorsByTags(const TArray<AActor*>& Actors,
-	const FGameplayTagContainer& Tags, EGameplayContainerMatchType MatchType, bool bExactMatch,
+	FGameplayTagContainer Tags, EGameplayContainerMatchType MatchType, bool bExactMatch,
 	TArray<AActor*>& OutActors, int32& MatchCount)
 {
 	OutActors.Reset();
@@ -98,7 +98,7 @@ void UGameplayTagFilterLibrary::FilterActorsByTags(const TArray<AActor*>& Actors
 }
 
 void UGameplayTagFilterLibrary::FindActorsInTagMap(const TMap<FGameplayTag, AActor*>& ActorMap,
-	const FGameplayTag& Tag, bool bExactMatch,
+	FGameplayTag Tag, bool bExactMatch,
 	TArray<AActor*>& OutActors, TArray<FGameplayTag>& OutMatchedKeys, int32& MatchCount)
 {
 	OutActors.Reset();
@@ -122,7 +122,7 @@ void UGameplayTagFilterLibrary::FindActorsInTagMap(const TMap<FGameplayTag, AAct
 }
 
 void UGameplayTagFilterLibrary::FindActorsInTagGroups(const TArray<FTaggedActorArray>& Groups,
-	const FGameplayTag& Tag, bool bExactMatch,
+	FGameplayTag Tag, bool bExactMatch,
 	TArray<AActor*>& OutActors, TArray<FGameplayTag>& OutMatchedTags, int32& MatchCount)
 {
 	OutActors.Reset();
@@ -153,7 +153,7 @@ void UGameplayTagFilterLibrary::FindActorsInTagGroups(const TArray<FTaggedActorA
 }
 
 void UGameplayTagFilterLibrary::FilterActorsMapByTag(const TMap<AActor*, FGameplayTagContainer>& ActorMap,
-	const FGameplayTag& Tag, bool bExactMatch,
+	FGameplayTag Tag, bool bExactMatch,
 	TArray<AActor*>& OutActors, int32& MatchCount)
 {
 	OutActors.Reset();

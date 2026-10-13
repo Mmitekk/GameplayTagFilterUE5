@@ -15,6 +15,7 @@
   h1 { font-size: 22px; margin: 0 0 4px; }
   h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
        border-bottom: 1.5px solid #111; padding-bottom: 3px; margin: 22px 0 8px; }
+  h3 { font-size: 13.5px; margin: 16px 0 6px; }
   .tabs { display: flex; gap: 6px; margin: 14px 0 18px; }
   .tab {
     font: inherit; font-size: 13px; cursor: pointer;
@@ -25,6 +26,7 @@
   table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0; }
   th, td { border: 1px solid #111; padding: 5px 8px; text-align: left; vertical-align: top; }
   th { background: #e8e8e8; }
+  td:first-child { white-space: nowrap; }
   code { font-family: Consolas, monospace; font-size: 12.5px;
          background: #ececec; padding: 0 4px; border: 1px solid #ccc; }
   pre { font-family: Consolas, monospace; font-size: 12.5px;
@@ -33,7 +35,7 @@
   li { margin: 3px 0; }
   .note { border-left: 3px solid #111; background: #f5f5f5; padding: 6px 10px; margin: 8px 0; }
   @media print {
-    body { margin: 0 auto; font-size: 12.5px; }
+    body { margin: 0 auto; font-size: 12px; }
     .tabs { display: none; }
     [hidden] { display: block !important; }
     #lang-en { page-break-before: always; }
@@ -57,29 +59,75 @@
   <h2>Совместимость</h2>
   <ul>
     <li>Unreal Engine <b>5.2 и 5.8</b> (Win64), исходники без версионной специфики</li>
-    <li>Один Runtime-модуль, GAS (AbilitySystemComponent) <b>не нужен</b> — стандартные Actor Tags (FName)</li>
+    <li>Один Runtime-модуль; используются стандартные <b>Actor Tags</b> (список FName на панели актора), никаких дополнительных систем не нужно</li>
   </ul>
 
-  <h2>Установка</h2>
-  <p>Скопируйте папку <code>GameplayTagFilter</code> в <code>&lt;Проект&gt;/Plugins/</code> и перезапустите редактор. Ноды появятся в палитре в категории <b>Tag Filter</b>.</p>
+  <h2>Сначала о главном: что такое MatchCount</h2>
+  <div class="note"><code>MatchCount</code> — это просто <b>число «сколько нашёл»</b>, всегда равное длине выходного массива. Он дублирует <code>OutActors.Num()</code>, чтобы не тянуть лишний узел: одно сравнение <code>MatchCount &gt; 0</code> отвечает на вопрос «нашёлся ли хоть кто-то». А <code>Gameplay Tag Container</code> — это просто <b>список тегов</b> (набор).</div>
 
-  <h2>Ноды</h2>
+  <h2>1. Filter Actors by Tag</h2>
+  <p>«У меня есть массив акторов — оставить только тех, у кого есть тег X».</p>
   <table>
-    <tr><th>Нода</th><th>Вход</th><th>Выход</th></tr>
-    <tr><td><b>Filter Actors by Tag</b></td><td>массив акторов + один тег</td><td>совпавшие акторы + <code>MatchCount</code></td></tr>
-    <tr><td><b>Filter Actors by Tags</b></td><td>массив акторов + контейнер тегов + режим <b>Any/All</b></td><td>совпавшие акторы + <code>MatchCount</code></td></tr>
-    <tr><td><b>Find Actors in Tag Map</b></td><td><code>TMap&lt;FGameplayTag, AActor*&gt;</code> + тег (сравниваются <b>ключи</b>)</td><td>акторы + совпавшие ключи + <code>MatchCount</code></td></tr>
-    <tr><td><b>Find Actors in Tag Groups</b></td><td>массив <code>FTaggedActorArray {Tag, Actors[]}</code> + тег</td><td>акторы всех подошедших групп + их теги + <code>MatchCount</code></td></tr>
-    <tr><td><b>Filter Actors Map by Tag</b></td><td><code>TMap&lt;AActor*, FGameplayTagContainer&gt;</code> + тег (сравниваются <b>теги-значения</b>)</td><td>акторы, чьи теги совпали + <code>MatchCount</code></td></tr>
+    <tr><th>Пин</th><th>Что это</th></tr>
+    <tr><td><code>Actors</code></td><td>Массив акторов, которые проверяем</td></tr>
+    <tr><td><code>Tag</code></td><td>Тег, который ищем</td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> (по умолчанию) — с иерархией: запрос <code>Damage</code> найдёт и <code>Damage</code>, и <code>Damage.Fire</code>. <b>true</b> — только точное имя</td></tr>
+    <tr><td><code>OutActors</code></td><td>Результат: акторы, у которых тег нашёлся (в том же порядке, что на входе)</td></tr>
+    <tr><td><code>MatchCount</code></td><td>Сколько нашли. Равно длине <code>OutActors</code> — для быстрой проверки «нашёлся ли хоть один»</td></tr>
   </table>
-  <p>Все ноды <b>BlueprintPure</b> — без exec-пинов.</p>
 
-  <h2>Сравнение тегов (пин bExactMatch)</h2>
+  <h2>2. Filter Actors by Tags</h2>
+  <p>То же самое, но ищем по <b>нескольким</b> тегам сразу.</p>
+  <table>
+    <tr><th>Пин</th><th>Что это</th></tr>
+    <tr><td><code>Actors</code></td><td>Массив акторов, которые проверяем</td></tr>
+    <tr><td><code>Tags</code></td><td>Список тегов, которые ищем (Gameplay Tag Container)</td></tr>
+    <tr><td><code>MatchType</code></td><td><b>Any</b> — актору достаточно хотя бы одного тега из списка. <b>All</b> — нужны все теги из списка</td></tr>
+    <tr><td><code>bExactMatch</code></td><td>Как в первой ноде</td></tr>
+    <tr><td><code>OutActors</code></td><td>Акторы, прошедшие фильтр</td></tr>
+    <tr><td><code>MatchCount</code></td><td>Сколько нашли</td></tr>
+  </table>
+
+  <h2>3. Find Actors in Tag Map</h2>
+  <p>«У меня мапа, где <b>ключ — тег</b>, а <b>значение — актор</b>. Достать записи по тегу».</p>
+  <table>
+    <tr><th>Пин</th><th>Что это</th></tr>
+    <tr><td><code>ActorMap</code></td><td>Сама мапа <code>Тег → Актoр</code>. У каждой записи: ключ — тег, значение — актор</td></tr>
+    <tr><td><code>Tag</code></td><td>Тег-запрос. Сравнивается с <b>ключами</b> записей</td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> — запрос <code>Damage</code> находит и запись с ключом <code>Damage.Fire</code>; <b>true</b> — только точный ключ</td></tr>
+    <tr><td><code>OutActors</code></td><td>Акторы из всех записей, где ключ совпал</td></tr>
+    <tr><td><code>OutMatchedKeys</code></td><td>Какие именно ключи совпали. Полезно при иерархическом поиске: запросили <code>Status.ChangeFreeze</code>, а совпал ключ <code>Status.ChangeFreeze.Grill</code> — здесь видно, какая ветка сработала</td></tr>
+    <tr><td><code>MatchCount</code></td><td>Сколько записей совпало (равно длине <code>OutActors</code>)</td></tr>
+  </table>
+
+  <h2>4. Find Actors in Tag Groups</h2>
+  <p>«Тег → <b>несколько</b> акторов». Мапа с массивом внутри в Blueprint запрещена движком (вложенные контейнеры), поэтому такие данные хранятся как <b>массив структур</b> <code>FTaggedActorArray</code> — у структуры два поля: <code>Tag</code> (тег группы) и <code>Actors</code> (акторы группы). Нода возвращает сразу всех акторов подошедших групп.</p>
+  <table>
+    <tr><th>Пин</th><th>Что это</th></tr>
+    <tr><td><code>Groups</code></td><td>Массив групп. Каждая группа = один тег + акторы, к нему относящиеся</td></tr>
+    <tr><td><code>Tag</code></td><td>Тег-запрос. Сравнивается с тегом каждой группы</td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> — запрос <code>Damage</code> найдёт и группу с тегом <code>Damage.Fire</code>; <b>true</b> — только точное имя</td></tr>
+    <tr><td><code>OutActors</code></td><td>Все акторы из всех подошедших групп, слитые в один массив</td></tr>
+    <tr><td><code>OutMatchedTags</code></td><td>Теги именно тех групп, что совпали (каждый — один раз)</td></tr>
+    <tr><td><code>MatchCount</code></td><td>Сколько акторов вернули. Может быть больше числа совпавших групп — в группе обычно несколько акторов</td></tr>
+  </table>
+
+  <h2>5. Filter Actors Map by Tag</h2>
+  <p>«Мапа, где <b>ключ — актор</b>, а <b>значение — список его тегов</b>. Отобрать акторов по тегу».</p>
+  <table>
+    <tr><th>Пин</th><th>Что это</th></tr>
+    <tr><td><code>ActorMap</code></td><td>Сама мапа <code>Актoр → Теги</code></td></tr>
+    <tr><td><code>Tag</code></td><td>Тег-запрос. Проверяется по <b>списку тегов</b> (значению) каждой записи</td></tr>
+    <tr><td><code>bExactMatch</code></td><td>Как обычно: <b>false</b> — с иерархией, <b>true</b> — точно</td></tr>
+    <tr><td><code>OutActors</code></td><td>Акторы-ключи, в списке тегов которых нашёлся запрос</td></tr>
+    <tr><td><code>MatchCount</code></td><td>Сколько нашли</td></tr>
+  </table>
+
+  <h2>Общие правила сравнения</h2>
   <ul>
-    <li><b>false</b> (по умолчанию) — иерархия, как в GAS: запрос <code>Damage</code> находит <code>Damage</code> и <code>Damage.Fire</code>, но не родителя.</li>
-    <li><b>true</b> — только точное совпадение имени.</li>
-    <li>В мапе <code>Тег → Актoр</code> поиск идёт по <b>ключу</b>: запрос <code>Damage</code> вытащит и запись с ключом <code>Damage.Fire</code>.</li>
-    <li>Иерархия работает для тегов из словаря проекта (<b>Project Settings → Gameplay Tags</b>); незарегистрированные имена матчатся только точно.</li>
+    <li>Записи с пустыми/битыми акторами молча пропускаются; пустой тег-запрос → пустой результат.</li>
+    <li><b>Иерархия</b> работает только для тегов, зарегистрированных в словаре проекта (<b>Project Settings → Gameplay Tags</b>). Самодельные имена вне словаря совпадают только точно.</li>
+    <li>Направление иерархии всегда «от родителя к потомкам»: запрос-родитель находит потомков, но не наоборот.</li>
   </ul>
 
   <h2>Пример</h2>
@@ -91,8 +139,8 @@ Filter Actors by Tag (запрос: Damage, bExactMatch = false)
 Filter Actors by Tag (запрос: Damage, bExactMatch = true)
    → Лук                  (MatchCount = 1)</pre>
 
-  <h2>Почему «тег → массив акторов» — это массив структур</h2>
-  <p>Blueprint запрещает <code>TMap&lt;FGameplayTag, TArray&lt;AActor*&gt;&gt;</code> (вложенные контейнеры в мапах запрещены движком), поэтому вариант «тег → группа акторов» реализован нодой <b>Find Actors in Tag Groups</b>, принимающей массив структуры <code>FTaggedActorArray</code> (<code>Tag</code> + <code>Actors</code>) — семантика та же.</p>
+  <h2>Установка</h2>
+  <p>Скопируйте папку <code>GameplayTagFilter</code> в <code>&lt;Проект&gt;/Plugins/</code> и перезапустите редактор. Ноды появятся в палитре в категории <b>Tag Filter</b>.</p>
 
   <h2>Сборка из исходников</h2>
   <pre>"&lt;Engine&gt;\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin
@@ -109,29 +157,75 @@ Filter Actors by Tag (запрос: Damage, bExactMatch = true)
   <h2>Compatibility</h2>
   <ul>
     <li>Unreal Engine <b>5.2 and 5.8</b> (Win64); source has no version-specific code</li>
-    <li>Single Runtime module, GAS (AbilitySystemComponent) <b>not required</b> — standard Actor Tags (FName)</li>
+    <li>Single Runtime module; works with standard <b>Actor Tags</b> (the FName list on the actor's panel), no extra systems required</li>
   </ul>
 
-  <h2>Installation</h2>
-  <p>Copy the <code>GameplayTagFilter</code> folder into <code>&lt;Project&gt;/Plugins/</code> and restart the editor. The nodes appear in the palette under the <b>Tag Filter</b> category.</p>
+  <h2>First things first: what is MatchCount</h2>
+  <div class="note"><code>MatchCount</code> is simply <b>"how many were found"</b> — it always equals the length of the output array. It duplicates <code>OutActors.Num()</code> so you don't have to: one <code>MatchCount &gt; 0</code> comparison answers "did we find anything". And a <code>Gameplay Tag Container</code> is just a <b>list of tags</b> (a set).</div>
 
-  <h2>Nodes</h2>
+  <h2>1. Filter Actors by Tag</h2>
+  <p>"I have an array of actors — keep only those that have tag X."</p>
   <table>
-    <tr><th>Node</th><th>Input</th><th>Output</th></tr>
-    <tr><td><b>Filter Actors by Tag</b></td><td>actor array + one tag</td><td>matching actors + <code>MatchCount</code></td></tr>
-    <tr><td><b>Filter Actors by Tags</b></td><td>actor array + tag container + <b>Any/All</b> mode</td><td>matching actors + <code>MatchCount</code></td></tr>
-    <tr><td><b>Find Actors in Tag Map</b></td><td><code>TMap&lt;FGameplayTag, AActor*&gt;</code> + tag (compares <b>keys</b>)</td><td>actors + matched keys + <code>MatchCount</code></td></tr>
-    <tr><td><b>Find Actors in Tag Groups</b></td><td>array of <code>FTaggedActorArray {Tag, Actors[]}</code> + tag</td><td>actors from all matching groups + their tags + <code>MatchCount</code></td></tr>
-    <tr><td><b>Filter Actors Map by Tag</b></td><td><code>TMap&lt;AActor*, FGameplayTagContainer&gt;</code> + tag (compares <b>tag values</b>)</td><td>actors whose tags matched + <code>MatchCount</code></td></tr>
+    <tr><th>Pin</th><th>Meaning</th></tr>
+    <tr><td><code>Actors</code></td><td>The actors to check</td></tr>
+    <tr><td><code>Tag</code></td><td>The tag to search for</td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> (default) — hierarchical: query <code>Damage</code> finds both <code>Damage</code> and <code>Damage.Fire</code>. <b>true</b> — exact name only</td></tr>
+    <tr><td><code>OutActors</code></td><td>The result: actors whose tags matched (input order preserved)</td></tr>
+    <tr><td><code>MatchCount</code></td><td>How many were found. Equals the <code>OutActors</code> length — handy for a quick "found anything?" check</td></tr>
   </table>
-  <p>All nodes are <b>BlueprintPure</b> — no exec pins.</p>
 
-  <h2>Tag matching (the bExactMatch pin)</h2>
+  <h2>2. Filter Actors by Tags</h2>
+  <p>The same, but searching by <b>several</b> tags at once.</p>
+  <table>
+    <tr><th>Pin</th><th>Meaning</th></tr>
+    <tr><td><code>Actors</code></td><td>The actors to check</td></tr>
+    <tr><td><code>Tags</code></td><td>The list of tags to search for (a Gameplay Tag Container)</td></tr>
+    <tr><td><code>MatchType</code></td><td><b>Any</b> — one tag from the list is enough. <b>All</b> — every tag from the list is required</td></tr>
+    <tr><td><code>bExactMatch</code></td><td>Same as the first node</td></tr>
+    <tr><td><code>OutActors</code></td><td>Actors that passed the filter</td></tr>
+    <tr><td><code>MatchCount</code></td><td>How many were found</td></tr>
+  </table>
+
+  <h2>3. Find Actors in Tag Map</h2>
+  <p>"I have a map where the <b>key is a tag</b> and the <b>value is an actor</b>. Fetch entries by tag."</p>
+  <table>
+    <tr><th>Pin</th><th>Meaning</th></tr>
+    <tr><td><code>ActorMap</code></td><td>The <code>Tag → Actor</code> map itself. Each entry: key = tag, value = actor</td></tr>
+    <tr><td><code>Tag</code></td><td>The query tag. Compared against the entry <b>keys</b></td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> — query <code>Damage</code> also finds the entry keyed <code>Damage.Fire</code>; <b>true</b> — exact key only</td></tr>
+    <tr><td><code>OutActors</code></td><td>Actors from all entries whose key matched</td></tr>
+    <tr><td><code>OutMatchedKeys</code></td><td>Which keys matched. Useful with hierarchical search: you queried <code>Status.ChangeFreeze</code> and the key <code>Status.ChangeFreeze.Grill</code> matched — here you see which branch responded</td></tr>
+    <tr><td><code>MatchCount</code></td><td>How many entries matched (equals the <code>OutActors</code> length)</td></tr>
+  </table>
+
+  <h2>4. Find Actors in Tag Groups</h2>
+  <p>"A tag → <b>several</b> actors". A map with an array inside is forbidden in Blueprint (no nested containers), so such data is stored as an <b>array of structs</b> <code>FTaggedActorArray</code> — the struct has two fields: <code>Tag</code> (the group's tag) and <code>Actors</code> (the group's actors). The node returns all actors from all matching groups at once.</p>
+  <table>
+    <tr><th>Pin</th><th>Meaning</th></tr>
+    <tr><td><code>Groups</code></td><td>The array of groups. Each group = one tag + the actors belonging to it</td></tr>
+    <tr><td><code>Tag</code></td><td>The query tag. Compared against each group's tag</td></tr>
+    <tr><td><code>bExactMatch</code></td><td><b>false</b> — query <code>Damage</code> also finds a group tagged <code>Damage.Fire</code>; <b>true</b> — exact name only</td></tr>
+    <tr><td><code>OutActors</code></td><td>All actors from all matching groups, merged into one array</td></tr>
+    <tr><td><code>OutMatchedTags</code></td><td>The tags of the groups that matched (each listed once)</td></tr>
+    <tr><td><code>MatchCount</code></td><td>How many actors were returned. May exceed the number of matched groups — a group usually holds several actors</td></tr>
+  </table>
+
+  <h2>5. Filter Actors Map by Tag</h2>
+  <p>"A map where the <b>key is an actor</b> and the <b>value is its list of tags</b>. Filter actors by tag."</p>
+  <table>
+    <tr><th>Pin</th><th>Meaning</th></tr>
+    <tr><td><code>ActorMap</code></td><td>The <code>Actor → Tags</code> map itself</td></tr>
+    <tr><td><code>Tag</code></td><td>The query tag. Checked against each entry's <b>tag list</b> (the value)</td></tr>
+    <tr><td><code>bExactMatch</code></td><td>As usual: <b>false</b> — hierarchical, <b>true</b> — exact</td></tr>
+    <tr><td><code>OutActors</code></td><td>Key actors whose tag list contains the query</td></tr>
+    <tr><td><code>MatchCount</code></td><td>How many were found</td></tr>
+  </table>
+
+  <h2>General matching rules</h2>
   <ul>
-    <li><b>false</b> (default) — hierarchical matching, same as GAS: the query <code>Damage</code> finds <code>Damage</code> and <code>Damage.Fire</code>, but not the parent.</li>
-    <li><b>true</b> — exact name match only.</li>
-    <li>For the <code>Tag → Actor</code> map the lookup runs on <b>keys</b>: the query <code>Damage</code> also returns the entry keyed <code>Damage.Fire</code>.</li>
-    <li>Hierarchy only applies to tags registered in the project's tag dictionary (<b>Project Settings → Gameplay Tags</b>); unregistered names match exactly only.</li>
+    <li>Entries with empty/invalid actors are silently skipped; an empty query tag → empty result.</li>
+    <li><b>Hierarchy</b> only works for tags registered in the project's tag dictionary (<b>Project Settings → Gameplay Tags</b>). Custom names outside the dictionary match exactly only.</li>
+    <li>Hierarchy direction is always parent → children: a parent query finds descendants, not the other way around.</li>
   </ul>
 
   <h2>Example</h2>
@@ -143,8 +237,8 @@ Filter Actors by Tag (query: Damage, bExactMatch = false)
 Filter Actors by Tag (query: Damage, bExactMatch = true)
    → Bow                  (MatchCount = 1)</pre>
 
-  <h2>Why "tag → actor array" is an array of structs</h2>
-  <p>Blueprint does not allow <code>TMap&lt;FGameplayTag, TArray&lt;AActor*&gt;&gt;</code> (nested containers are forbidden in maps), so the "tag → actor group" case is exposed as <b>Find Actors in Tag Groups</b>, taking an array of the <code>FTaggedActorArray</code> struct (<code>Tag</code> + <code>Actors</code>) — same semantics.</p>
+  <h2>Installation</h2>
+  <p>Copy the <code>GameplayTagFilter</code> folder into <code>&lt;Project&gt;/Plugins/</code> and restart the editor. The nodes appear in the palette under the <b>Tag Filter</b> category.</p>
 
   <h2>Building from source</h2>
   <pre>"&lt;Engine&gt;\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin
