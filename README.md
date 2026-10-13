@@ -4,7 +4,7 @@
 
 ![Ноды плагина в Blueprint](Media/Nodes.png)
 
-**[🇬🇧 English version →](README_EN.md)** · Интерактивная версия с табами: **[README.html](README.html)**
+**[🇬🇧 English version →](README_EN.md)**
 
 ## Совместимость
 
