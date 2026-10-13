@@ -2,6 +2,8 @@
 
 Пять Blueprint-нод, которые достают акторы с нужным Gameplay Tag из **массива** или **мапы** одной нодой — вместо связки ForEach → Actor Has Tag → Branch → Add.
 
+![Ноды плагина в Blueprint](Media/Nodes.png)
+
 **[🇬🇧 English version →](README_EN.md)** · Интерактивная версия с табами: **[README.html](README.html)**
 
 ## Совместимость

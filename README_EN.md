@@ -2,6 +2,8 @@
 
 Five Blueprint nodes that fetch actors with a given Gameplay Tag from an **array** or a **map** in a single node — instead of wiring ForEach → Actor Has Tag → Branch → Add.
 
+![The plugin nodes in Blueprint](Media/Nodes.png)
+
 **[🇷🇺 Русская версия →](README.md)** · Interactive tabbed version: **[README.html](README.html)**
 
 ## Compatibility
