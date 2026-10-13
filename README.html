@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GameplayTag Filter (UE5) — README</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #111; background: #fff;
+    max-width: 860px; margin: 24px auto; padding: 0 16px;
+    font-size: 14px; line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
+       border-bottom: 1.5px solid #111; padding-bottom: 3px; margin: 22px 0 8px; }
+  .tabs { display: flex; gap: 6px; margin: 14px 0 18px; }
+  .tab {
+    font: inherit; font-size: 13px; cursor: pointer;
+    border: 1.5px solid #111; background: #fff; color: #111;
+    padding: 6px 18px;
+  }
+  .tab.active { background: #111; color: #fff; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0; }
+  th, td { border: 1px solid #111; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #e8e8e8; }
+  code { font-family: Consolas, monospace; font-size: 12.5px;
+         background: #ececec; padding: 0 4px; border: 1px solid #ccc; }
+  pre { font-family: Consolas, monospace; font-size: 12.5px;
+        border: 1px solid #111; background: #fafafa; padding: 8px 12px; overflow-x: auto; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  .note { border-left: 3px solid #111; background: #f5f5f5; padding: 6px 10px; margin: 8px 0; }
+  @media print {
+    body { margin: 0 auto; font-size: 12.5px; }
+    .tabs { display: none; }
+    [hidden] { display: block !important; }
+    #lang-en { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<h1>GameplayTag Filter (Unreal Engine)</h1>
+<p>Blueprint-ноды / Blueprint nodes · UE 5.2 &amp; 5.8 · Win64</p>
+
+<div class="tabs">
+  <button class="tab active" data-lang="ru">Русский</button>
+  <button class="tab" data-lang="en">English</button>
+</div>
+
+<!-- ==================== RU (по умолчанию) ==================== -->
+<div id="lang-ru">
+  <p>Пять Blueprint-нод, которые достают акторы с нужным Gameplay Tag из <b>массива</b> или <b>мапы</b> одной нодой — вместо связки ForEach → Actor Has Tag → Branch → Add.</p>
+
+  <h2>Совместимость</h2>
+  <ul>
+    <li>Unreal Engine <b>5.2 и 5.8</b> (Win64), исходники без версионной специфики</li>
+    <li>Один Runtime-модуль, GAS (AbilitySystemComponent) <b>не нужен</b> — стандартные Actor Tags (FName)</li>
+  </ul>
+
+  <h2>Установка</h2>
+  <p>Скопируйте папку <code>GameplayTagFilter</code> в <code>&lt;Проект&gt;/Plugins/</code> и перезапустите редактор. Ноды появятся в палитре в категории <b>Tag Filter</b>.</p>
+
+  <h2>Ноды</h2>
+  <table>
+    <tr><th>Нода</th><th>Вход</th><th>Выход</th></tr>
+    <tr><td><b>Filter Actors by Tag</b></td><td>массив акторов + один тег</td><td>совпавшие акторы + <code>MatchCount</code></td></tr>
+    <tr><td><b>Filter Actors by Tags</b></td><td>массив акторов + контейнер тегов + режим <b>Any/All</b></td><td>совпавшие акторы + <code>MatchCount</code></td></tr>
+    <tr><td><b>Find Actors in Tag Map</b></td><td><code>TMap&lt;FGameplayTag, AActor*&gt;</code> + тег (сравниваются <b>ключи</b>)</td><td>акторы + совпавшие ключи + <code>MatchCount</code></td></tr>
+    <tr><td><b>Find Actors in Tag Groups</b></td><td>массив <code>FTaggedActorArray {Tag, Actors[]}</code> + тег</td><td>акторы всех подошедших групп + их теги + <code>MatchCount</code></td></tr>
+    <tr><td><b>Filter Actors Map by Tag</b></td><td><code>TMap&lt;AActor*, FGameplayTagContainer&gt;</code> + тег (сравниваются <b>теги-значения</b>)</td><td>акторы, чьи теги совпали + <code>MatchCount</code></td></tr>
+  </table>
+  <p>Все ноды <b>BlueprintPure</b> — без exec-пинов.</p>
+
+  <h2>Сравнение тегов (пин bExactMatch)</h2>
+  <ul>
+    <li><b>false</b> (по умолчанию) — иерархия, как в GAS: запрос <code>Damage</code> находит <code>Damage</code> и <code>Damage.Fire</code>, но не родителя.</li>
+    <li><b>true</b> — только точное совпадение имени.</li>
+    <li>В мапе <code>Тег → Актoр</code> поиск идёт по <b>ключу</b>: запрос <code>Damage</code> вытащит и запись с ключом <code>Damage.Fire</code>.</li>
+    <li>Иерархия работает для тегов из словаря проекта (<b>Project Settings → Gameplay Tags</b>); незарегистрированные имена матчатся только точно.</li>
+  </ul>
+
+  <h2>Пример</h2>
+  <pre>Массив акторов:  Костёр [Damage.Fire]   Лук [Damage]   Дверь [Door]
+
+Filter Actors by Tag (запрос: Damage, bExactMatch = false)
+   → Костёр, Лук          (MatchCount = 2)
+
+Filter Actors by Tag (запрос: Damage, bExactMatch = true)
+   → Лук                  (MatchCount = 1)</pre>
+
+  <h2>Почему «тег → массив акторов» — это массив структур</h2>
+  <p>Blueprint запрещает <code>TMap&lt;FGameplayTag, TArray&lt;AActor*&gt;&gt;</code> (вложенные контейнеры в мапах запрещены движком), поэтому вариант «тег → группа акторов» реализован нодой <b>Find Actors in Tag Groups</b>, принимающей массив структуры <code>FTaggedActorArray</code> (<code>Tag</code> + <code>Actors</code>) — семантика та же.</p>
+
+  <h2>Сборка из исходников</h2>
+  <pre>"&lt;Engine&gt;\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin
+  "-Plugin=&lt;Path&gt;\GameplayTagFilter.uplugin" "-Package=&lt;OutDir&gt;"
+  -TargetPlatforms=Win64 -NoSubmit</pre>
+  <p>Либо как часть проекта: скопировать плагин в <code>&lt;Проект&gt;/Plugins/</code> и собрать таргет проекта.</p>
+  <div class="note">Примечание: в UE 5.x модуль должен содержать явный <code>IMPLEMENT_MODULE(FDefaultModuleImpl, GameplayTagFilter);</code> — UHT не всегда генерирует обвязку сам (уже учтено в исходниках).</div>
+</div>
+
+<!-- ==================== EN ==================== -->
+<div id="lang-en" hidden>
+  <p>Five Blueprint nodes that fetch actors with a given Gameplay Tag from an <b>array</b> or a <b>map</b> in a single node — instead of wiring ForEach → Actor Has Tag → Branch → Add.</p>
+
+  <h2>Compatibility</h2>
+  <ul>
+    <li>Unreal Engine <b>5.2 and 5.8</b> (Win64); source has no version-specific code</li>
+    <li>Single Runtime module, GAS (AbilitySystemComponent) <b>not required</b> — standard Actor Tags (FName)</li>
+  </ul>
+
+  <h2>Installation</h2>
+  <p>Copy the <code>GameplayTagFilter</code> folder into <code>&lt;Project&gt;/Plugins/</code> and restart the editor. The nodes appear in the palette under the <b>Tag Filter</b> category.</p>
+
+  <h2>Nodes</h2>
+  <table>
+    <tr><th>Node</th><th>Input</th><th>Output</th></tr>
+    <tr><td><b>Filter Actors by Tag</b></td><td>actor array + one tag</td><td>matching actors + <code>MatchCount</code></td></tr>
+    <tr><td><b>Filter Actors by Tags</b></td><td>actor array + tag container + <b>Any/All</b> mode</td><td>matching actors + <code>MatchCount</code></td></tr>
+    <tr><td><b>Find Actors in Tag Map</b></td><td><code>TMap&lt;FGameplayTag, AActor*&gt;</code> + tag (compares <b>keys</b>)</td><td>actors + matched keys + <code>MatchCount</code></td></tr>
+    <tr><td><b>Find Actors in Tag Groups</b></td><td>array of <code>FTaggedActorArray {Tag, Actors[]}</code> + tag</td><td>actors from all matching groups + their tags + <code>MatchCount</code></td></tr>
+    <tr><td><b>Filter Actors Map by Tag</b></td><td><code>TMap&lt;AActor*, FGameplayTagContainer&gt;</code> + tag (compares <b>tag values</b>)</td><td>actors whose tags matched + <code>MatchCount</code></td></tr>
+  </table>
+  <p>All nodes are <b>BlueprintPure</b> — no exec pins.</p>
+
+  <h2>Tag matching (the bExactMatch pin)</h2>
+  <ul>
+    <li><b>false</b> (default) — hierarchical matching, same as GAS: the query <code>Damage</code> finds <code>Damage</code> and <code>Damage.Fire</code>, but not the parent.</li>
+    <li><b>true</b> — exact name match only.</li>
+    <li>For the <code>Tag → Actor</code> map the lookup runs on <b>keys</b>: the query <code>Damage</code> also returns the entry keyed <code>Damage.Fire</code>.</li>
+    <li>Hierarchy only applies to tags registered in the project's tag dictionary (<b>Project Settings → Gameplay Tags</b>); unregistered names match exactly only.</li>
+  </ul>
+
+  <h2>Example</h2>
+  <pre>Actor array:   Campfire [Damage.Fire]   Bow [Damage]   Door [Door]
+
+Filter Actors by Tag (query: Damage, bExactMatch = false)
+   → Campfire, Bow        (MatchCount = 2)
+
+Filter Actors by Tag (query: Damage, bExactMatch = true)
+   → Bow                  (MatchCount = 1)</pre>
+
+  <h2>Why "tag → actor array" is an array of structs</h2>
+  <p>Blueprint does not allow <code>TMap&lt;FGameplayTag, TArray&lt;AActor*&gt;&gt;</code> (nested containers are forbidden in maps), so the "tag → actor group" case is exposed as <b>Find Actors in Tag Groups</b>, taking an array of the <code>FTaggedActorArray</code> struct (<code>Tag</code> + <code>Actors</code>) — same semantics.</p>
+
+  <h2>Building from source</h2>
+  <pre>"&lt;Engine&gt;\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin
+  "-Plugin=&lt;Path&gt;\GameplayTagFilter.uplugin" "-Package=&lt;OutDir&gt;"
+  -TargetPlatforms=Win64 -NoSubmit</pre>
+  <p>Or as part of a project: copy the plugin into <code>&lt;Project&gt;/Plugins/</code> and build the project target.</p>
+  <div class="note">Note: in UE 5.x the module must contain an explicit <code>IMPLEMENT_MODULE(FDefaultModuleImpl, GameplayTagFilter);</code> — UHT does not always generate the boilerplate (already handled in this source).</div>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === b); });
+      document.getElementById('lang-ru').hidden = (b.dataset.lang !== 'ru');
+      document.getElementById('lang-en').hidden = (b.dataset.lang !== 'en');
+    });
+  });
+</script>
+
+</body>
+</html>

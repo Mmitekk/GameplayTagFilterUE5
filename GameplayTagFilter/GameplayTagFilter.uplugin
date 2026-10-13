@@ -1,0 +1,18 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "GameplayTag Filter",
+	"Description": "Blueprint nodes to fetch actors from arrays and maps by Gameplay Tag, without loop+branch boilerplate. Matches the standard Actor Tags (FName) as well as real FGameplayTag keys, with optional hierarchical (parent/child) matching.",
+	"Category": "Scripting",
+	"CreatedBy": "",
+	"CanContainContent": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GameplayTagFilter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
