@@ -4,11 +4,12 @@ Five Blueprint nodes that fetch actors with a given Gameplay Tag from an **array
 
 ![The plugin nodes in Blueprint](Media/Nodes.png)
 
-**[🇷🇺 Русская версия →](README.md)** · Interactive tabbed version: **[README.html](README.html)**
+**[🇷🇺 Русская версия →](README.md)** · Interactive tabbed version: **[README.html](docs/README.html)**
 
 ## Compatibility
 
-- Unreal Engine **5.2 and 5.8** (Win64); source has no version-specific code
+- Unreal Engine **5.2 – 5.8**, including the intermediate **5.3 – 5.7** (Win64)
+- Tested on 5.2.1 and 5.8.1; the source has no version-specific code — the entire API surface used (tags, containers, Actor Tags, pin metadata) is identical across the whole 5.2–5.8 range
 - Single Runtime module; works with standard **Actor Tags** (the FName list on the actor's panel), no extra systems required
 
 ## First things first: what is MatchCount
